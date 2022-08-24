@@ -10,27 +10,27 @@ import {
   COOKIES,
   EVENT,
   TITLE_TIMEOUT,
-  VERSION_TIMEOUT,
+  VERSION_TIMEOUT
 } from "../constants";
 import { loadFromBlob } from "../data/blob";
 import {
   ExcalidrawElement,
   FileId,
-  NonDeletedExcalidrawElement,
+  NonDeletedExcalidrawElement
 } from "../element/types";
 import { useCallbackRefState } from "../hooks/useCallbackRefState";
 import { t } from "../i18n";
 import {
   Excalidraw,
   defaultLang,
-  languages,
+  languages
 } from "../packages/excalidraw/index";
 import {
   AppState,
   LibraryItems,
   ExcalidrawImperativeAPI,
   BinaryFiles,
-  ExcalidrawInitialDataState,
+  ExcalidrawInitialDataState
 } from "../types";
 import {
   debounce,
@@ -39,30 +39,30 @@ import {
   isTestEnv,
   preventUnload,
   ResolvablePromise,
-  resolvablePromise,
+  resolvablePromise
 } from "../utils";
 import {
   FIREBASE_STORAGE_PREFIXES,
   STORAGE_KEYS,
-  SYNC_BROWSER_TABS_TIMEOUT,
+  SYNC_BROWSER_TABS_TIMEOUT
 } from "./app_constants";
 import Collab, {
   CollabAPI,
   collabAPIAtom,
   collabDialogShownAtom,
-  isCollaboratingAtom,
+  isCollaboratingAtom
 } from "./collab/Collab";
 import { LanguageList } from "./components/LanguageList";
 import {
   exportToBackend,
   getCollaborationLinkData,
   isCollaborationLink,
-  loadScene,
+  loadScene
 } from "./data";
 import {
   getLibraryItemsFromStorage,
   importFromLocalStorage,
-  importUsernameFromLocalStorage,
+  importUsernameFromLocalStorage
 } from "./data/localStorage";
 import CustomStats from "./CustomStats";
 import { restore, restoreAppState, RestoredDataState } from "../data/restore";
@@ -88,12 +88,12 @@ polyfill();
 window.EXCALIDRAW_THROTTLE_RENDER = true;
 
 const isExcalidrawPlusSignedUser = document.cookie.includes(
-  COOKIES.AUTH_STATE_COOKIE,
+  COOKIES.AUTH_STATE_COOKIE
 );
 
 const languageDetector = new LanguageDetector();
 languageDetector.init({
-  languageUtils: {},
+  languageUtils: {}
 });
 
 const initializeScene = async (opts: {
@@ -108,7 +108,7 @@ const initializeScene = async (opts: {
   const searchParams = new URLSearchParams(window.location.search);
   const id = searchParams.get("id");
   const jsonBackendMatch = window.location.hash.match(
-    /^#json=([a-zA-Z0-9_-]+),([a-zA-Z0-9_-]+)$/,
+    /^#json=([a-zA-Z0-9_-]+),([a-zA-Z0-9_-]+)$/
   );
   const externalUrlMatch = window.location.hash.match(/^#url=(.*)$/);
 
@@ -133,7 +133,7 @@ const initializeScene = async (opts: {
         scene = await loadScene(
           jsonBackendMatch[1],
           jsonBackendMatch[2],
-          localDataState,
+          localDataState
         );
       }
       scene.scrollToContent = true;
@@ -148,8 +148,8 @@ const initializeScene = async (opts: {
             "focus",
             () => initializeScene(opts).then(resolve).catch(reject),
             {
-              once: true,
-            },
+              once: true
+            }
           );
         });
       }
@@ -170,14 +170,14 @@ const initializeScene = async (opts: {
       ) {
         return { scene: data, isExternalScene };
       }
-    } catch (error: any) {
+    } catch (error) {
       return {
         scene: {
           appState: {
-            errorMessage: t("alerts.invalidSceneUrl"),
-          },
+            errorMessage: t("alerts.invalidSceneUrl")
+          }
         },
-        isExternalScene,
+        isExternalScene
       };
     }
   }
@@ -197,17 +197,17 @@ const initializeScene = async (opts: {
           ...restoreAppState(scene?.appState, excalidrawAPI.getAppState()),
           // necessary if we're invoking from a hashchange handler which doesn't
           // go through App.initializeScene() that resets this flag
-          isLoading: false,
+          isLoading: false
         },
         elements: reconcileElements(
           scene?.elements || [],
           excalidrawAPI.getSceneElementsIncludingDeleted(),
-          excalidrawAPI.getAppState(),
-        ),
+          excalidrawAPI.getAppState()
+        )
       },
       isExternalScene: true,
       id: roomLinkData.roomId,
-      key: roomLinkData.roomKey,
+      key: roomLinkData.roomKey
     };
   } else if (scene) {
     return isExternalScene && jsonBackendMatch
@@ -215,37 +215,12 @@ const initializeScene = async (opts: {
           scene,
           isExternalScene,
           id: jsonBackendMatch[1],
-          key: jsonBackendMatch[2],
+          key: jsonBackendMatch[2]
         }
       : { scene, isExternalScene: false };
   }
   return { scene: null, isExternalScene: false };
 };
-
-const PlusLPLinkJSX = (
-  <p style={{ direction: "ltr", unicodeBidi: "embed" }}>
-    Introducing Excalidraw+
-    <br />
-    <a
-      href="https://plus.excalidraw.com/plus?utm_source=excalidraw&utm_medium=banner&utm_campaign=launch"
-      target="_blank"
-      rel="noreferrer"
-    >
-      Try out now!
-    </a>
-  </p>
-);
-
-const PlusAppLinkJSX = (
-  <a
-    href={`${process.env.REACT_APP_PLUS_APP}/#excalidraw-redirect`}
-    target="_blank"
-    rel="noreferrer"
-    className="plus-button"
-  >
-    Go to Excalidraw+
-  </a>
-);
 
 const ExcalidrawWrapper = () => {
   const [errorMessage, setErrorMessage] = useState("");
@@ -261,8 +236,7 @@ const ExcalidrawWrapper = () => {
     promise: ResolvablePromise<ExcalidrawInitialDataState | null>;
   }>({ promise: null! });
   if (!initialStatePromiseRef.current.promise) {
-    initialStatePromiseRef.current.promise =
-      resolvablePromise<ExcalidrawInitialDataState | null>();
+    initialStatePromiseRef.current.promise = resolvablePromise<ExcalidrawInitialDataState | null>();
   }
 
   useEffect(() => {
@@ -273,8 +247,9 @@ const ExcalidrawWrapper = () => {
     }, VERSION_TIMEOUT);
   }, []);
 
-  const [excalidrawAPI, excalidrawRefCallback] =
-    useCallbackRefState<ExcalidrawImperativeAPI>();
+  const [excalidrawAPI, excalidrawRefCallback] = useCallbackRefState<
+    ExcalidrawImperativeAPI
+  >();
 
   const [collabAPI] = useAtom(collabAPIAtom);
   const [, setCollabDialogShown] = useAtom(collabDialogShownAtom);
@@ -284,7 +259,7 @@ const ExcalidrawWrapper = () => {
 
   useHandleLibrary({
     excalidrawAPI,
-    getInitialLibraryItems: getLibraryItemsFromStorage,
+    getInitialLibraryItems: getLibraryItemsFromStorage
   });
 
   useEffect(() => {
@@ -294,7 +269,7 @@ const ExcalidrawWrapper = () => {
 
     const loadImages = (
       data: ResolutionType<typeof initializeScene>,
-      isInitialLoad = false,
+      isInitialLoad = false
     ) => {
       if (!data.scene) {
         return;
@@ -303,14 +278,14 @@ const ExcalidrawWrapper = () => {
         if (data.scene.elements) {
           collabAPI
             .fetchImageFilesFromFirebase({
-              elements: data.scene.elements,
+              elements: data.scene.elements
             })
             .then(({ loadedFiles, erroredFiles }) => {
               excalidrawAPI.addFiles(loadedFiles);
               updateStaleImageStatuses({
                 excalidrawAPI,
                 erroredFiles,
-                elements: excalidrawAPI.getSceneElementsIncludingDeleted(),
+                elements: excalidrawAPI.getSceneElementsIncludingDeleted()
               });
             });
         }
@@ -327,13 +302,13 @@ const ExcalidrawWrapper = () => {
           loadFilesFromFirebase(
             `${FIREBASE_STORAGE_PREFIXES.shareLinkFiles}/${data.id}`,
             data.key,
-            fileIds,
+            fileIds
           ).then(({ loadedFiles, erroredFiles }) => {
             excalidrawAPI.addFiles(loadedFiles);
             updateStaleImageStatuses({
               excalidrawAPI,
               erroredFiles,
-              elements: excalidrawAPI.getSceneElementsIncludingDeleted(),
+              elements: excalidrawAPI.getSceneElementsIncludingDeleted()
             });
           });
         } else if (isInitialLoad) {
@@ -347,7 +322,7 @@ const ExcalidrawWrapper = () => {
                 updateStaleImageStatuses({
                   excalidrawAPI,
                   erroredFiles,
-                  elements: excalidrawAPI.getSceneElementsIncludingDeleted(),
+                  elements: excalidrawAPI.getSceneElementsIncludingDeleted()
                 });
               });
           }
@@ -381,7 +356,7 @@ const ExcalidrawWrapper = () => {
             excalidrawAPI.updateScene({
               ...data.scene,
               ...restore(data.scene, null, null),
-              commitToHistory: true,
+              commitToHistory: true
             });
           }
         });
@@ -390,7 +365,7 @@ const ExcalidrawWrapper = () => {
 
     const titleTimeout = setTimeout(
       () => (document.title = APP_NAME),
-      TITLE_TIMEOUT,
+      TITLE_TIMEOUT
     );
 
     const syncData = debounce(() => {
@@ -408,10 +383,10 @@ const ExcalidrawWrapper = () => {
           }
           setLangCode(langCode);
           excalidrawAPI.updateScene({
-            ...localDataState,
+            ...localDataState
           });
           excalidrawAPI.updateLibrary({
-            libraryItems: getLibraryItemsFromStorage(),
+            libraryItems: getLibraryItemsFromStorage()
           });
           collabAPI.setUsername(username || "");
         }
@@ -440,7 +415,7 @@ const ExcalidrawWrapper = () => {
                 updateStaleImageStatuses({
                   excalidrawAPI,
                   erroredFiles,
-                  elements: excalidrawAPI.getSceneElementsIncludingDeleted(),
+                  elements: excalidrawAPI.getSceneElementsIncludingDeleted()
                 });
               });
           }
@@ -477,7 +452,7 @@ const ExcalidrawWrapper = () => {
       document.removeEventListener(
         EVENT.VISIBILITY_CHANGE,
         visibilityChange,
-        false,
+        false
       );
       clearTimeout(titleTimeout);
     };
@@ -490,7 +465,7 @@ const ExcalidrawWrapper = () => {
       if (
         excalidrawAPI &&
         LocalData.fileStorage.shouldPreventUnload(
-          excalidrawAPI.getSceneElements(),
+          excalidrawAPI.getSceneElements()
         )
       ) {
         preventUnload(event);
@@ -509,7 +484,7 @@ const ExcalidrawWrapper = () => {
   const onChange = (
     elements: readonly ExcalidrawElement[],
     appState: AppState,
-    files: BinaryFiles,
+    files: BinaryFiles
   ) => {
     if (collabAPI?.isCollaborating()) {
       collabAPI.syncElements(elements);
@@ -539,7 +514,7 @@ const ExcalidrawWrapper = () => {
 
           if (didChange) {
             excalidrawAPI.updateScene({
-              elements,
+              elements
             });
           }
         }
@@ -551,7 +526,7 @@ const ExcalidrawWrapper = () => {
     exportedElements: readonly NonDeletedExcalidrawElement[],
     appState: AppState,
     files: BinaryFiles,
-    canvas: HTMLCanvasElement | null,
+    canvas: HTMLCanvasElement | null
   ) => {
     if (exportedElements.length === 0) {
       return window.alert(t("alerts.cannotExportEmptyCanvas"));
@@ -564,11 +539,11 @@ const ExcalidrawWrapper = () => {
             ...appState,
             viewBackgroundColor: appState.exportBackground
               ? appState.viewBackgroundColor
-              : getDefaultAppState().viewBackgroundColor,
+              : getDefaultAppState().viewBackgroundColor
           },
-          files,
+          files
         );
-      } catch (error: any) {
+      } catch (error) {
         if (error.name !== "AbortError") {
           const { width, height } = canvas;
           console.error(error, { width, height });
@@ -584,19 +559,9 @@ const ExcalidrawWrapper = () => {
         return null;
       }
 
-      return (
-        <div
-          style={{
-            width: isExcalidrawPlusSignedUser ? "21ch" : "23ch",
-            fontSize: "0.7em",
-            textAlign: "center",
-          }}
-        >
-          {isExcalidrawPlusSignedUser ? PlusAppLinkJSX : PlusLPLinkJSX}
-        </div>
-      );
+      return null;
     },
-    [],
+    []
   );
 
   const renderFooter = useCallback(
@@ -628,7 +593,7 @@ const ExcalidrawWrapper = () => {
           <div
             style={{
               display: "flex",
-              flexDirection: isTinyDevice ? "column" : "row",
+              flexDirection: isTinyDevice ? "column" : "row"
             }}
           >
             <fieldset>
@@ -636,23 +601,6 @@ const ExcalidrawWrapper = () => {
               {renderLanguageList()}
             </fieldset>
             {/* FIXME remove after 2021-05-20 */}
-            <div
-              style={{
-                width: "24ch",
-                fontSize: "0.7em",
-                textAlign: "center",
-                marginTop: isTinyDevice ? 16 : undefined,
-                marginLeft: "auto",
-                marginRight: isTinyDevice ? "auto" : undefined,
-                padding: isExcalidrawPlusSignedUser ? undefined : "4px 2px",
-                border: isExcalidrawPlusSignedUser
-                  ? undefined
-                  : "1px dashed #aaa",
-                borderRadius: 12,
-              }}
-            >
-              {isExcalidrawPlusSignedUser ? PlusAppLinkJSX : PlusLPLinkJSX}
-            </div>
           </div>
         );
       }
@@ -663,12 +611,12 @@ const ExcalidrawWrapper = () => {
         </>
       );
     },
-    [langCode],
+    [langCode]
   );
 
   const renderCustomStats = (
     elements: readonly NonDeletedExcalidrawElement[],
-    appState: AppState,
+    appState: AppState
   ) => {
     return (
       <CustomStats
@@ -692,7 +640,7 @@ const ExcalidrawWrapper = () => {
     <div
       style={{ height: "100%" }}
       className={clsx("excalidraw-app", {
-        "is-collaborating": isCollaborating,
+        "is-collaborating": isCollaborating
       })}
     >
       <Excalidraw
@@ -715,17 +663,16 @@ const ExcalidrawWrapper = () => {
                     onError={(error) => {
                       excalidrawAPI?.updateScene({
                         appState: {
-                          errorMessage: error.message,
-                        },
+                          errorMessage: error.message
+                        }
                       });
                     }}
                   />
                 );
-              },
-            },
-          },
+              }
+            }
+          }
         }}
-        renderTopRightUI={renderTopRightUI}
         renderFooter={renderFooter}
         langCode={langCode}
         renderCustomStats={renderCustomStats}
